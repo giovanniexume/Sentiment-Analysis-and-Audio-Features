@@ -1,0 +1,196 @@
+---
+title: "Doja Cat - Sentiment Analysis Example Code"
+author: "Giovanni Exume"
+date: "2022-12-30"
+output: word_document
+---
+
+
+```{r}
+setwd("/Users/giovanniexume/Documents/Data and Text Mining/Audio and Sentiment Data")
+
+```
+
+
+
+```{r}
+library(tidyverse)
+library(tidymodels)
+library(tidytext)
+library(wordcloud)
+library(textdata)
+library(SKTools)
+library(janitor)
+library(httr)
+library(httpuv)
+library(ggthemes)
+library(lubridate)
+library(stopwords)
+library(openxlsx)
+
+library(academictwitteR)
+library(devtools)
+
+```
+
+
+
+# Scrapping Tweets
+
+```{r}
+bearer_academic <- "AAAAAAAAAAAAAAAAAAAAAPL0kwEAAAAAvTw3jkCvBp%2BQ1YgAt%2BK1T0SE%2Fyc%3DqqJDTPQrvlPTLjFzjqvpJbMCC9ZDScFGXlPnbIZVA9PNjoWnwN"
+
+#this has already been regenerated
+```
+
+
+
+
+## Scrapping Tweets for Doja Cat, #Doja Cat or Doja From Jan 1 to June 30
+```{r}
+doja_rawtweets<-
+  get_all_tweets(
+    query = c("doja cat", "#dojacat", "doja"),
+    bearer_token = bearer_academic,
+    start_tweets = "2022-01-01T00:00:00-05:00", 
+    end_tweets = "2022-06-30T23:59:00-05:00",
+    is_retweet = FALSE,
+    n = 40000,
+    page_n = 500, 
+    lang = "en"
+  ) %>% select(created_at, id, text, public_metrics)
+
+```
+
+
+## Cleaning
+
+```{r}
+doja_rawtweets <-doja_rawtweets %>% filter(!grepl('2022-07-01', created_at)) #removing tweets that don't match timeframe
+
+```
+
+
+```{r}
+
+doja_cleantweets <- doja_rawtweets %>% unnest(doja_rawtweets, public_metrics) #unnesting public metrics
+  
+doja_cleantweets <- doja_cleantweets %>% 
+  select(created_at, id, text, retweet_count, like_count) %>%
+  rename(date = created_at,
+         retweets = retweet_count,
+         likes = like_count)
+
+doja_cleantweets$date <- ymd_hms(doja_cleantweets$date) #changing date format
+
+doja_cleantweets <- doja_cleantweets %>% arrange(date) %>% mutate(tweet_no = row_number()) #creating new ids
+
+
+```
+
+
+
+## Removal of mentions, special characters, hyperlinks, numbers, and lowering cases
+
+```{r}
+
+doja_cleantweets$text <- gsub(pattern = "[0-9]+|[[:punct:]]|\\(.*\\)|http.*",replacement = "", doja_cleantweets$text) #removing numbers, punctuation, any string with \\, and any http urls
+
+doja_cleantweets$text <- tolower(doja_cleantweets$text) #changing uppercase words to lower
+
+doja_cleantweets$text <- gsub(pattern = "\n",replacement = "", doja_cleantweets$text) #removing new lines character
+
+
+```
+
+## Creating Term Document Matrix, Removing Stop Words
+
+
+```{r}
+
+doja_tdm <- doja_cleantweets %>% unnest_tokens(word, text) %>% select(tweet_no, word)
+doja_tdm %>% count(tweet_no, sort = TRUE)
+
+#shows how many words per tweet
+```
+
+
+
+```{r}
+doja_tdm  %>%
+  count(word) %>%
+    arrange(desc(n))
+
+#shows which words currently appear most frequently
+```
+
+
+
+
+
+```{r}
+data("stop_words") #from the tidytext package
+sw <- as.data.frame(stopwords("en", source = "stopwords-iso")) %>% rename(word = 1) #from the stopwords package
+
+dojaword <- c("doja", "doja cat", "cat", "dojacat", "cats", "nowplaying", "drake", "nicki", "minaj", "megan", "stallion", "ariana", "grande", "ari", "cardi", "sza", "malone", "amp", "nowplaying", "ft", "jncwdoja", "vegas", "dojas", "yall") #removing meaningless or uninteresting words, specific to doja cat 
+  
+doja_stopwords <- as.data.frame(dojaword) %>% rename(word = dojaword)
+
+
+```
+
+
+
+```{r}
+doja_tdm_clean<- doja_tdm %>% 
+  anti_join(stop_words) %>%
+  anti_join(sw) %>%
+  anti_join(doja_stopwords)
+```
+
+```{r}
+
+doja_tdm_clean  %>%
+  count(word) %>%
+    arrange(desc(n))
+
+
+```
+
+
+# Summaries and Sentiment Analysis
+
+```{r}
+
+
+doja_tdm_clean %>% count(word, sort = TRUE) %>% slice(1:10) %>%
+  ggplot(aes(x = reorder(word, -n), y = n)) +
+  geom_col(fill = "lightblue") +
+  labs(x = "Top 10 Words for Doja", y ="Count")
+```
+
+```{r}
+get_sentiments("bing") #positive or negative
+```
+
+
+## Sentiment
+```{r}
+doja_sentiment <- doja_tdm_clean %>%
+  inner_join(get_sentiments("bing"), by = "word") %>% count(tweet_no, sentiment) %>%
+  pivot_wider(names_from = sentiment, values_from = n, values_fill = 0) %>%
+  mutate(sentiment_value = positive-negative) 
+
+```
+
+
+```{r}
+doja_sentiment %>% 
+  ggplot(aes(x = tweet_no, y = sentiment_value)) + 
+  geom_col(fill = "darkorange3") +
+  labs(x = "Sentiment for Doja", y ="Sentiment Value")
+```
+
+
+
+

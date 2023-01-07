@@ -1,0 +1,152 @@
+---
+title: "Doja Cat - Audio Analysis Example Code"
+author: "Giovanni Exume"
+date: "2022-12-30"
+output: word_document
+---
+
+```{r}
+setwd("/Users/giovanniexume/Documents/Data and Text Mining/Audio and Sentiment Data")
+```
+
+```{r}
+library(tidyverse)
+library(tidyr)
+library(SKTools)
+library(stats)
+library(janitor)
+library(broom)
+library(spotifyr)
+library(httr)
+library(httpuv)
+
+```
+
+
+```{r}
+token <- get_spotify_access_token(
+  client_id = "b6fc4a095b82428bb6ead317d8705589",
+  client_secret = "348fd7c6370844c6bfd3d2d4000d0211")
+
+#these have already been regenerated
+```
+
+
+
+# Doja Cat
+
+
+# Audio Features and Artist Info
+
+```{r}
+get_artist(id = "5cj0lLjcoR7YOSnhnX0Po5",
+             authorization = token)
+```
+
+Avg Popularity: 88
+Genre: Dance Pop, Pop
+
+```{r}
+doja_all_audiofeatures <- get_artist_audio_features(artist = "5cj0lLjcoR7YOSnhnX0Po5", 
+                                                      return_closest_artist = FALSE,
+                                                      market = "US",
+                                                      authorization = token)
+```
+
+
+
+```{r}
+
+cleandoja<- doja_all_audiofeatures %>% select(artist_name, track_id, track_name, track_number, album_name, danceability, energy, speechiness, acousticness, instrumentalness, valence, duration_ms, album_id, analysis_url, track_href)
+
+
+
+```
+
+# Getting and Joining Popularity Variable
+
+## Track Ids List
+
+```{r}
+doja_trackids <- list(cleandoja$track_id)
+cat(shQuote(doja_trackids), "\n")
+
+```
+
+
+## Getting popularity for tracks 
+
+The limit for this function is 50 tracks at a time, so this is done incrementally
+```{r}
+dojapopularity <- get_tracks(ids = c("1M3XB6EUPUZy58Aqt6zbKr", "7E01yTzdhlzS4H4rH2k7HH", "1pdTHjkIgxdWodGpi9YJ5d", "0FYc9DIr89rbzt2WJMvyou", "6G6ykEzZ1r7V1qrmNdBOVV", "2HzPCR7K0RR8nutu3l3QtN", "0bOgWId7cFqBEKnlZct2q6", "7Me3GKpQyEsHwS9xnOrUgM", "0GU7GSh1Ri0CKOe7fseiR1", "5MkBYMZGDWAKLHAJesZ6MJ", "2VT56hhAcF0D3lGx9PUthf", "0frkJRc31JunrJ6JmqRpqa", "3jt8YFtxRJOg99gmJuQBiC", "5cOyxjetBT7kRnqL68madd", "4rmwWGh87KY0ouByBEh1zC", "1uQ1TZ9YIWCtBTgq09uoix", "2rokN1FX25tFt7vPTFi5lB", "4jw87bP3TuCGm15g9kc64g", "5OQnuRwGJTDwk4PNq21Som", "2GcLFoAHdAWAEinJ0Pczgd", "4VILNVZu8Hlvx2f3f75PPR", "4Kys7I9XmDHQBnqbBtSNEB", "6TUMzhr0wkwXxsg79G8bRl", "0i9d3F52xW7TIP0hzEzcxu", "3Rs3i84uxkG7cSQfoDXkHP", "7lS9M5w23LtncUUwYRfBmP", "1Owf6hoLy63t9GmYJNV1TD", "0UuRGAvm6vT898QoLrLWYN", "0Z8Q3N2YDb18lifuhz6NQR", "6rGzDkRMoizWe8WxhmPEsB", "1gGv3ADOpvZXCNs7KkzXeT", "5gYyD0WX61phtQjRmn3n2e", "5M5gXIH8ehg0XfkhpBgVr4", "6ecDRJW1uExNz8JmzkOXuo", "6uIEL5nrp5WdeS7ihteywc", "0i3Ac5QfcimCsekJw9Kodn", "15WMq9KCrwVwHJquoyBuoZ", "6Uj1ctrBOjOas8xZXGqKk4", "0CsR9Y9SnC6ZWmekmVqSHz", "2HolBGR6tpiWI80MXoV1dJ", "0W6I02J9xcqK8MtSeosEXb", "3Vi5XqYrmQgOYBajMWSvCi", "0FFsgUoFibYISzMxuGS61W", "6Q9IUoBTNLHgBib1FSFGbj", "0k4d5YPDr1r7FX77VdqWez", "7y3xU9vEC1s8DSuuoSYKih", "1ayV64ur8VWgc6OPtPRl1q", "5lAnYvAIkSDNXqfo7DyFUm"),
+                               market = "US",
+                               authorization = token,
+                              include_meta_info = FALSE) %>% 
+  select(id, popularity) %>% dplyr::rename(track_id = id)
+
+dojapopularity2 <- get_tracks(ids = c("5CC5krEgwJXuoA0F9scOFg", "45Nc6nYgV3yBvAeRaZt689", "3DarAbFujv6eYNliUTyqtz", "2ds0pWAKDaq9yz3o6rexbk", "7u1sP42hRttuwCV1XKdR8f", "5yJuMSd5wBgtomSr0u7HO3", "4V5siYO9zHpLX5qf2F0qBV", "4GcmlWvhVYsb8vTEaq5492", "5Orunvd0o8nu5WZLrEScqI", "5kLVoPbWNZMAA3Wz3wLaWx", "4bxSyy1KxkGEfPQMIXFLWO", "3DyKJT2ADGzZQBhtSy19VY", "4jnO4Q6wdHOIFiv4dYFuVv", "6QYIgaOMK2wxuCJAfJJTJr", "0vgyewz1cDd338nLrRAJqj", "47362Yh7VtOwx9jSpNssds", "1ghvzmzpx2nnrbx7wtpMgo", "7k51pIqTGEHHZOnpI11Qq2", "1TMWcbxL5YF8rKsFHv5hAP", "1L0z2CQKrKJ2spYSMkfim9", "3Dv1eDb0MEgF93GpLXlucZ", "4EivmOT13NMpNSfTKn9p4s", "1j6NZFHrpc09YmEZuSlmwf", "2OAcH9SD8ehxuG0tWNe0cU", "60ynsPSSKe6O3sfwRnIBRf", "5xIDCYGTyLaDkiaaulVPcJ", "1ZiJGdjNtvgngdT3wRKVqS", "7f5trao56t7sB7f14QDTmp", "0a4sEwtxPbqXYmQvEBqQJt", "7xbYPRXKJcvKvuoltcK6vj", "2QC65CEKa8rCAIiQU2Gvu8","25ZUaEKcdyZ9Ou0JRORJM8", "0FsKQ04gn6CHHOq2ISEm0H", "3iGvxIXEzpSNyxMLNbqcgM", "0PCy2ZJO25E3kqmgm7gZX6", "7LTj0E1oAuv7d9KJ4aAI5T", "7BuzRZy8aanLYuPBoH5cxN", "6PXwx87AMGuPjOTIcZVLed", "7fzvbhCDxpDOia4uQ0Ftjn", "3HcRR40qkr7juMhnS8SlNu", "5aHWVlzTD4n26JG6J34UsC", "5hH8AeTxOxJ0vw3O5YXwTb", "4c8B9nMlIE8bfUdgKHScKg", "1o4aDH0BYwZdSEm7fJzYhD", "3hFIXFEPtvruqYsoMW2eKN", "3Y1skP4N1zbrSuH1xfLm9k", "7N0T6i3ZER3p3SYBzxMeCV", "4de1X6v99U7tfOXrNUCTbi"),
+                               market = "US",
+                               authorization = token,
+                              include_meta_info = FALSE) %>% 
+  select(id, popularity) %>% dplyr::rename(track_id = id)
+
+dojapopularity3 <- get_tracks(ids = c("1MuN3LGtM2tNsqH9qC47tG", "5idhEHmpq4MNVxQD4DqE8K", "2VWaX5BNrwyqt12RmwgM4E", "6UNV8mflEmh8PJqeTPC1p3", "3tUdpqlrhZONJBRVXDxegM", "4cTm3Ev9bUvy4ChJjB1nhl", "1uNePI826aqh9uC9pgbeHU", "043dDJ9u0PQ3ooAXMgcwOe", "0cbP8fBXcA7NT4MYlOYlaN", "5H4ulyIq9PGF8UwtnDm2i1", "6uA6m01rsGu1JWYXwyvtdJ", "0p7xjfvSZzcKCWNwu0c4dd", "4kVXmELBMCtkxcsZpotbxB", "0usnOCmedZdOzAVJzDZh6K", "4tE4YkqGp5yHStkJ6nRJFt", "4GA6WD0TqGejJXxuGMuukz", "0lFxPN1jIX2Ngn2ufpAWv0", "7bYZr6uDvupFPAKbW0eypX", "04aIvIBMlDWnv6NZDBUQac", "3XlFBhWmwMEOW0RFzRrfai", "39XpXvyahisH7RmklmMZzK", "20GMdpeWHUEtjAdpdy4YIt", "59PHSDRpTQZu3uoxG30MRT", "7DuqY6qzQrT0w3Xt7vvhSc", "6iOvnACn4ChlAw4lWUU4dd", "4QdjPwwCCq3ifWVHiRj3jx", "1V4uZia23KCnh7BfTTsVMu", "2s4AcE9n80mSHl87lp4gIm", "2qa3vv0vGeVUZnwlwoKpDY", "2nNlfZtsryTNse0Oru6FcO", "0owMmMqkYKJ4g6UcaH5Pho", "1VJwtWR6z7SpZRwipI12be", "7FhZ0fcmBhizimiHxnCAK6", "2tT9weSQUFDWsVgHBYz3G6", "3LCb6fZ8VZaeXfXfHgEt1j", "02z7THtFYTnqMTe4dPFhvR", "0iwRj9AOAcND08jDmg75pm", "00xiW34iyhiQHLD9qgLpfx", "0HtroirE06eNxhXf14UEQz", "3E2Lhk4tZUx6uSssYP4ceO", "5sa7uHCExVvrbb2lNPfjbW", "4eK2gIDxpDJStEwxfp1shd", "2jpk7T4MyDvf6g7sbABCJp", "15tfEvAxiwTiDJ4sksye8r", "5UpdQf3FsN809T9bGXExqg", "0Hwz5afLqcxXkT6Gkgj8yj", "6MQLDOV7paZIzTuqu0XDld", "5bM8IREZT0w3lIxuSuiS1e", "1aD7bmj9MpowiNpOO7t4mu", "6Gn3U0n7D1gQdGD3HjxeYr"),
+                               market = "US",
+                               authorization = token,
+                              include_meta_info = FALSE) %>% 
+  select(id, popularity) %>% dplyr::rename(track_id = id)
+
+
+dojapopularity_complete <- rbind(dojapopularity, dojapopularity2, dojapopularity3)
+
+```
+
+
+
+## Joining with cleandoja
+```{r}
+cleandoja_complete<- left_join(cleandoja, dojapopularity_complete, by = "track_id")
+```
+
+#Averages and Summaries for Doja
+
+## Key Audio Metrics
+
+```{r}
+
+doja_audiosummary <- cleandoja_complete %>% select(danceability, energy,  valence, speechiness, acousticness, instrumentalness) %>% gather(audio_metric, score, danceability:instrumentalness) %>% group_by(audio_metric) %>%
+  summarise(average_score = mean(score)) %>%
+  arrange(desc(average_score))
+
+```
+
+
+```{r}
+doja_audiosummary  %>% ggplot(aes(x = audio_metric, y = average_score, fill = audio_metric)) +
+  geom_col() +
+  scale_fill_discrete(type = c("#eee279", "#fac682", "#c48a3f", "#8a4f7d", "#7b0828", "goldenrod")) +
+  labs(title = "Average Metrics for Entire Discography: Doja Cat", x = "Audio Metrics", y = "Score")
+```
+
+## Average Song Length
+```{r}
+(mean(cleandoja_complete$duration_ms)/60000) #average song length converted from milliseconds to minutes
+```
+
+Doja Cat's average song length is 3.32 minutes, or 3 minutes, 19 seconds long
+
+
+## Table Metrics for Doja's Top 10 Most Popular Songs
+
+```{r}
+
+doja_top10table <- 
+cleandoja_complete %>% 
+  arrange(desc(popularity)) %>%
+  slice(1:10) %>%
+  select(track_name, album_name, popularity, danceability, energy, duration_ms)
+```
+
+
+
+
