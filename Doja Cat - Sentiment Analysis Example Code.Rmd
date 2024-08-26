@@ -38,9 +38,7 @@ library(devtools)
 # Scrapping Tweets
 
 ```{r}
-bearer_academic <- "AAAAAAAAAAAAAAAAAAAAAPL0kwEAAAAAvTw3jkCvBp%2BQ1YgAt%2BK1T0SE%2Fyc%3DqqJDTPQrvlPTLjFzjqvpJbMCC9ZDScFGXlPnbIZVA9PNjoWnwN"
-
-#this has already been regenerated
+bearer_academic <- Sys.getev("BEARER")
 ```
 
 
