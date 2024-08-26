@@ -24,11 +24,11 @@ library(httpuv)
 
 
 ```{r}
-token <- get_spotify_access_token(
-  client_id = "b6fc4a095b82428bb6ead317d8705589",
-  client_secret = "348fd7c6370844c6bfd3d2d4000d0211")
 
-#these have already been regenerated
+token <- get_spotify_access_token(
+  client_id = Sys.getenv("SPOTIFY_CLIENT_ID"),
+  client_secret = Sys.getenv("SPOTIFY_CLIENT_SECRET"))
+
 ```
 
 
